@@ -1,0 +1,74 @@
+---
+title: Seasonal functional autoregressive models
+author: Rob J Hyndman
+date: 8 November 2018
+titlefontsize: 22pt
+colortheme: monashblue
+abstract: Functional autoregressive models have been widely used in functional time series analysis, but no attention has been given to handling seasonality within this framework. I will discuss a proposed  seasonal functional autoregressive model, and explore some of its statistical properties including stationarity conditions and limiting behaviour. I will also look at methods for estimation and prediction of seasonal functional autoregressive time series of order one. The ideas will be illustrated using simulation studies and real data.
+time: 20 minutes
+toc: true
+output:
+  binb::monash:
+    keep_tex: true
+    includes:
+      in_header: header.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, cache=TRUE, dev.args=list(bg=grey(0.9), pointsize=11))
+```
+
+# Intro
+
+## Examples
+
+\begin{block}{Notation}
+$f_t(x)$ where $t=1,\dots,T$ indexes regularly spaced time and $x$ is a continuous variable.
+\end{block}
+
+
+1. $f_t(x)=$ vegetation index at location $x$ in month $t$, measured by average satellite observations.
+2. $f_t(x)=$ mortality rate for people aged $x$ at day $t$.
+
+Sometimes $x$ may denote a second time variable.
+
+3. $f_t(x)=$ pollution level observed every 30 minutes. $x$ denotes time-of-day, $t$ denotes day.
+
+\vspace*{10cm}
+
+## Seasonality
+
+\begin{block}{Notation}
+$f_t(x)$ where $t=1,\dots,T$ indexes regularly spaced time and $x$ is a continuous variable.
+\end{block}
+
+
+Seasonality occurs when $f_t(x)$ is influenced by seasonal factors (e.g., the quarter of the year, the month, the day of the week, etc.).
+
+\begin{block}{}
+A possibly de-trended series is seasonal of period $S$ if
+$$
+  \E(f_{t}(x)) = \E(f_{t+S}(x)).
+$$
+\end{block}
+
+\vspace*{10cm}
+
+## Functional autoregression
+
+### FAR process introduced by Bosq (2000):
+
+ * popular for functional time series
+ * cannot handle seasonality
+
+### Seasonal autoregression
+For univariate time series, $\{X_t\}$, seasonal autoregressive processes satisfy
+\begin{eqnarray*}
+  X_t=\phi_1X_{t-S}+\phi_2X_{t-2S}+\dots+\phi_PX_{t-PS}+\varepsilon_t.
+\end{eqnarray*}
+where $\varepsilon_t\sim$ white noise.
+For stationarity, the roots of $\phi(x) = \phi_1x^{S}-\phi_2x^{2S}-\dots-\phi_Px_{PS}$ must lie outside unit circle.
+
+## More stuff
+
+In this paper, we propose a class of seasonal functional AR models, which are analogous to seasonal autoregressive models. We present some notation and definitions in Section~\ref{sec:notation}. Section~\ref{sec:SFAR1} introduces the seasonal functional AR$(1)$ model and discusses some of its properties. Estimation of the parameters of this model is studied in Section~\ref{sec:estimation} and the prediction problem is considered in Section~\ref{sec:prediction}. In Section~\ref{sec:SFARp}, the more general seasonal functional AR$(P)$ model is introduced and some its basic properties are scrutinized. Section~\ref{sec:simulation} is devoted to simulation studies and real data analysis. We conclude in Section~\ref{sec:conclusion}.
