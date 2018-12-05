@@ -1,74 +1,503 @@
 ---
 title: Seasonal functional autoregressive models
-author: Rob J Hyndman
+author: Rob J Hyndman & Atefeh Zamani
 date: 8 November 2018
-titlefontsize: 22pt
+titlefontsize: 21pt
 colortheme: monashblue
 abstract: Functional autoregressive models have been widely used in functional time series analysis, but no attention has been given to handling seasonality within this framework. I will discuss a proposed  seasonal functional autoregressive model, and explore some of its statistical properties including stationarity conditions and limiting behaviour. I will also look at methods for estimation and prediction of seasonal functional autoregressive time series of order one. The ideas will be illustrated using simulation studies and real data.
 time: 20 minutes
 toc: true
 output:
   binb::monash:
-    keep_tex: true
+    keep_tex: false
+    fig_height: 6
+    fig_width: 10
     includes:
       in_header: header.tex
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, cache=TRUE, dev.args=list(bg=grey(0.9), pointsize=11))
+library(tidyverse)
 ```
 
-# Intro
+# Motivation
+
+## Flu/respiratory mortality (US)
+
+```{r mortalitydata, include=FALSE}
+grag <- readRDS("GroupAggregate.rds")
+
+flu <- grag %>%
+  filter(ucr39 %in% as.character(27:28)) %>%
+  group_by(Time, sex, ager12) %>%
+  filter(ager12 != "Unknown") %>%
+  summarise(Count = sum(Count)) %>%
+  mutate(
+    month = lubridate::month(Time, label=TRUE),
+    time=as.numeric(Time),
+    time = 1+(time - 12784)/365
+  )
+```
+
+```{r mortality1}
+flu %>%
+  ggplot(aes(x = Time, y = Count/1000, col = sex)) +
+    geom_line() +
+    facet_wrap(~ager12, nrow = 3, scales = "free") +
+    xlab("Year") + ylab("Deaths (thousands)") #+
+#    guides(col=FALSE)
+```
+
+## Flu/respiratory mortality (US)
+
+```{r mortality2}
+
+flu %>%
+  ggplot(aes(x = ager12, y = Count/1000, group=time, col=time)) +
+    geom_line() +
+    facet_grid(month~sex) +
+    xlab("Age group") + ylab("Deaths (thousands)") +
+    guides(col=FALSE) +
+    scale_color_gradientn(colours=rainbow(15))
+```
 
 ## Examples
 
 \begin{block}{Notation}
-$f_t(x)$ where $t=1,\dots,T$ indexes regularly spaced time and $x$ is a continuous variable.
+  $X_t(u)$ where $t=1,\dots,T$ indexes regularly spaced time and $u$ is a continuous variable in $\mathbb{R}$ or $\mathbb{R}^2$
 \end{block}
 
+1. $X_t(u)=$ mortality rate for people aged $u$ in month $t$.
 
-1. $f_t(x)=$ vegetation index at location $x$ in month $t$, measured by average satellite observations.
-2. $f_t(x)=$ mortality rate for people aged $x$ at day $t$.
+2. $X_t(u)=$ vegetation index at location $u$ in month $t$, measured by average satellite observations.
 
-Sometimes $x$ may denote a second time variable.
+Sometimes $u$ may denote a second time variable.
 
-3. $f_t(x)=$ pollution level observed every 30 minutes. $x$ denotes time-of-day, $t$ denotes day.
+3. $X_t(u)=$ pollution level observed every 30 minutes. $u$ denotes time-of-day, $t$ denotes day.
 
 \vspace*{10cm}
+
+
 
 ## Seasonality
 
 \begin{block}{Notation}
-$f_t(x)$ where $t=1,\dots,T$ indexes regularly spaced time and $x$ is a continuous variable.
+  $X_t(u)$ where $t=1,\dots,T$ indexes regularly spaced time and $u$ is a continuous variable in $\mathbb{R}$ or $\mathbb{R}^2$
 \end{block}
 
 
-Seasonality occurs when $f_t(x)$ is influenced by seasonal factors (e.g., the quarter of the year, the month, the day of the week, etc.).
+Seasonality occurs when $X_t(u)$ is influenced by seasonal factors (e.g., the quarter of the year, the month, the day of the week, etc.).
 
-\begin{block}{}
-A possibly de-trended series is seasonal of period $S$ if
-$$
-  \E(f_{t}(x)) = \E(f_{t+S}(x)).
-$$
-\end{block}
-
+\vspace*{1.5cm}
+\begin{alertblock}{}
+  A (possibly de-trended) series is seasonal of period $S$ if
+  $$
+    \E[X_{t}(u)] = \E[X_{t+S}(u)].
+  $$
+\end{alertblock}
 \vspace*{10cm}
 
 ## Functional autoregression
 
-### FAR process introduced by Bosq (2000):
+\begin{alertblock}{FAR($p$) processes -- introduced by Bosq (2000)}
+  $$
+    X_{t}=\phi_1(X_{t-1})+\dots+\phi_p(X_{t-p})+\varepsilon_{t},
+  $$
+\end{alertblock}
+\vspace*{-0.3cm}
 
- * popular for functional time series
- * cannot handle seasonality
+  * $\{\bm{\varepsilon}_{t}\}$ is a functional $H$-white noise process
+  * $\phi_j$ are Hilbert-Schmidt integral operators in $\mathcal{L}(H)$
+  * $\phi_p\ne 0$
+  * Some stationarity conditions on $\phi_1,\dots,\phi_p$.
 
-### Seasonal autoregression
-For univariate time series, $\{X_t\}$, seasonal autoregressive processes satisfy
-\begin{eqnarray*}
-  X_t=\phi_1X_{t-S}+\phi_2X_{t-2S}+\dots+\phi_PX_{t-PS}+\varepsilon_t.
-\end{eqnarray*}
-where $\varepsilon_t\sim$ white noise.
-For stationarity, the roots of $\phi(x) = \phi_1x^{S}-\phi_2x^{2S}-\dots-\phi_Px_{PS}$ must lie outside unit circle.
+###
+\centering
+\begin{tabular}{rp{8cm}}
+  $H=$ & separable real Hilbert space of square integrable functions.\\
+  $\mathcal{L}(H)=$ & space of continuous linear operators from $H$ to $H$.
+\end{tabular}
 
-## More stuff
+## Seasonal univariate autoregression
+\fontsize{15}{16}\sf
 
-In this paper, we propose a class of seasonal functional AR models, which are analogous to seasonal autoregressive models. We present some notation and definitions in Section~\ref{sec:notation}. Section~\ref{sec:SFAR1} introduces the seasonal functional AR$(1)$ model and discusses some of its properties. Estimation of the parameters of this model is studied in Section~\ref{sec:estimation} and the prediction problem is considered in Section~\ref{sec:prediction}. In Section~\ref{sec:SFARp}, the more general seasonal functional AR$(P)$ model is introduced and some its basic properties are scrutinized. Section~\ref{sec:simulation} is devoted to simulation studies and real data analysis. We conclude in Section~\ref{sec:conclusion}.
+\begin{block}{AR($p$) processes}
+  $$
+    Y_t=\phi_1Y_{t-1}+\phi_2Y_{t-2}+\dots+\phi_pY_{t-p}+\varepsilon_t.
+  $$
+\end{block}
+\vspace*{-0.3cm}
+
+  * $\{\varepsilon_t\}$ is a real white noise process.
+  * $\phi_p\ne 0$
+  * Some stationarity conditions on $\phi_1,\dots,\phi_p$\pause
+
+\begin{alertblock}{SAR($P$)$_S$ processes}
+  $$
+    Y_t=\Phi_1Y_{t-S}+\Phi_2Y_{t-2S}+\dots+\Phi_PY_{t-PS}+\varepsilon_t.
+  $$
+\end{alertblock}
+\vspace*{-0.3cm}
+
+  * $\{\varepsilon_t\}$ is a real white noise process.
+  * $\Phi_P\ne0$
+  * Some stationarity conditions on $\Phi_1,\dots,\Phi_P$
+
+\vspace*{10cm}
+
+# SFAR(1)$_S$ processes
+
+## SFAR(1)$_S$ processes
+\fontsize{14}{15}\sf
+
+\begin{alertblock}{}
+  \centerline{$X_{t}=\Phi(X_{t-S})+\varepsilon_{t},$}
+\end{alertblock}
+\vspace*{-0.3cm}
+
+ * $\{\bm{\varepsilon}_{t}\}$ is a functional $H$-white noise process
+ * $\Phi$ is Hilbert-Schmidt integral operator in $\mathcal{L}(H)$
+ * $\Phi\ne 0$\pause
+
+### Stationarity of a SFAR(1)$_S$ process
+If there exists an integer $j_0\geq 1$ such that $\|\Phi^{j_0}\|_\mathcal{L}<1$,
+$$
+  \text{then}\qquad    X_t=\Phi(X_{t-S})+\varepsilon_t,
+$$
+has a unique stationary solution given by
+$$
+  X_t=\sum_{j=0}^\infty \Phi^{j}(\varepsilon_{t-jS}),
+$$
+where the series converges in $L^2_{H}$ with probability 1.
+
+
+## SFAR(1)$_S$ processes
+\fontsize{14}{15}\sf
+
+\begin{alertblock}{}
+  \centerline{$X_{t}=\Phi(X_{t-S})+\varepsilon_{t},$}
+\end{alertblock}
+\vspace*{-0.3cm}
+
+ * $\{\bm{\varepsilon}_{t}\}$ is a functional $H$-white noise process
+ * $\Phi$ is Hilbert-Schmidt integral operator in $\mathcal{L}(H)$
+ * $\Phi\ne 0$
+
+### Link to SAR(1)$_S$ processes
+Let $$\Phi=\sum\limits_{j=1}\alpha_j e_j\otimes e_j$$ be a symmetric compact operator on $H$.
+
+Then, $X_t$ is a SFAR(1)$_S$ process if and only if $\left\langle X_t, e_k\right\rangle$ is a $SAR(1)_S$ process.
+
+## SFAR(1)$_S$ processes
+\fontsize{13}{15}\sf
+
+Let ${\bf{Y}}_{t}=\left(X_{t},\dots,X_{t-S+1}\right)^{\prime}$ and $\bm{\varepsilon}_{t}=\left(\varepsilon_{t},0,\dots,0\right)^{\prime}$.\newline
+Define operator $\bm{\rho}$ on $H^{S}$:
+$$
+  \bm{\rho} =
+    \begin{bmatrix}
+      0      & 0      & \dots & 0      & \Phi \\
+      I      & 0      & \dots & 0      & 0 \\
+      0      & I      & \dots & 0      & 0 \\
+      \vdots & \vdots & \dots & \vdots & \vdots \\
+      0      & 0      & \dots & I      & 0
+    \end{bmatrix},
+  \quad\text{where $I$ is identity operator.}
+$$
+
+### Lemma
+  If $\bm{X}$ is SFAR(1)$_S$ process, associated with $(\bm{\varepsilon},\Phi)$, then $\bm{Y}$ is FAR(1) with values in product Hilbert space $H^S$ associated with $\left(\bm{\varepsilon},\bm{\rho}\right)$, i.e., $\bm{Y}_n=\bm{\rho}\bm{Y}_{n-1}+\bm{\varepsilon}_n.$
+
+## SFAR(1)$_S$ processes
+
+### Theorem
+Let $\mathcal{L}(H^S)$ be space of bounded linear operators on $H^S$ equipped with norm $\|\cdot\|_{\mathcal{L}^S}$. If
+$$
+  \|\bm{\rho}^{j_{0}}\|_{\mathcal{L}^S}<1,
+  \quad\text{for some $j_{0}\geq 1$},
+$$
+then SFAR(1)$_S$ has unique stationary solution given by
+$$
+  X_t=\sum_{j=0}^\infty
+    (\bm{\pi}\bm{\rho})(\bm{\varepsilon}_{t-j}),
+$$
+where the series converges in $L^2_{H^S}$ with probability 1 and $\bm{\pi}$ is the projector of $H^S$ onto $H$, defined as $\bm{\pi}(x_1,\dots,x_S)=x_1,$\quad $(x_1,\dots,x_S)\in H^S.$
+
+## Limit Theorems for SFAR(1)$_S$ processes
+
+### Theorem: Law of large numbers for $\bm{X}$
+If $\bm{X}$ is a standard SFAR(1)$_S$ then, as $T\rightarrow\infty$,
+
+$$
+  \frac{T^{0.25}}{(\log{T})^{\beta}}{\frac{(X_1+X_2+\dots+X_T)}{T}}\rightarrow 0,\qquad\text{for $\beta>0.5$.}
+$$
+
+### Central Limit Theorem
+
+Let $\bm{X}$ be a standard SFAR(1)$_S$ associated with a strong white noise $\bm{\varepsilon}$ and such that $I-\Phi$ is invertible. Then
+
+$$
+  \frac{(X_1+X_2+\dots+X_T)}{\sqrt{T}}\rightarrow\mathcal{N}(0,\Gamma),
+$$
+
+where $\Gamma=(I-\Phi)^{-1}C_{\varepsilon}(I-\Phi^{*})^{-1}$.
+
+# Estimation
+
+## Method of Moments
+
+\begin{block}{Covariance operator}
+$$
+ C_{k}^X = \E({X_t\otimes X_{t-k}}) \qquad\qquad
+ \hat{C}_{k}^X = \frac{1}{T}\sum_{t=k+1}^{T}X_{j}\otimes X_{j-k}
+$$
+\end{block}
+\begin{block}{Eigendecomposition}
+For any $x\in H$,
+\begin{align*}
+  \Phi(X)
+    = \sum_{j=1}^\infty \left\langle x,\nu_j\right\rangle \Phi(\nu_j)
+    = \sum_{j=1}^\infty\frac{C_S^X(\nu_{j})}{\lambda_j} \left\langle x,\nu_j\right\rangle
+\end{align*}
+\end{block}
+
+ * Estimate $\lambda_{j}$ and $\nu_{j}$  from $\hat{C}_0^X$.\vspace*{0.2cm}
+
+ * $\displaystyle\hat{\Phi}(X)=\sum_{j=1}^{J}\frac{\hat{C}_S^X(\hat{\nu}_{j})}{\hat{\lambda}_{j}} \left\langle{x},\hat{\nu}_{j}\right\rangle$
+
+## Yule-Walker estimates
+
+\begin{block}{}
+For SFAR$(P)_S$ processes,
+\begin{align*}
+  C_0 & =\Phi C_{-S}+C_{\varepsilon}\\
+  C_h & =\Phi C_{h-S}, \quad h\geq 1.
+\end{align*}
+\end{block}
+
+ * Replace $C_j$ with empirical counterpart to estimate $\Phi$ and $C_{\varepsilon}.$
+
+
+## Unconditional Least Squares
+
+\begin{block}{}
+Let $X_{tk}=\left\langle{X_{n}},\nu_{k}\right\rangle$ be projection of $t$th observation onto $k$th largest FPC.
+$$
+  X_{nk}=\sum_{j=1}^{p}\Phi_{kj}X_{n-S,j}+\delta_{nk}, \quad k=1,\dots,p
+$$
+where $\Phi_{kj}=\left\langle{\Phi(\nu_{j})},\nu_{k}\right\rangle.$ Note that the $\delta_{nk}$ are not iid.
+\end{block}
+
+ * Replace $\nu_{k}$ by $\hat{\nu}_{k}$ to get $\hat{X}_{tk}$
+
+## Unconditional Least Squares
+
+Set $\bm{X}_{n}=(\hat{X}_{n1},\dots,\hat{X}_{np})^{\prime}$, $\bm{\delta}_{n}=(\delta_{n1},\dots,\delta_{np})^{\prime}$,
+$$
+  \bm{\Phi}=(\Phi_{11},\dots,\Phi_{1p},\Phi_{21},\dots,\Phi_{2p},\dots,\Phi_{p1},\dots,\Phi_{pp})^{\prime}.
+$$
+$$
+  \bm{Z}_{n} =
+      \begin{bmatrix}
+        \bm{X}_{n}^{\prime} & \bm{0}_{p}^{\prime} & \dots & \bm{0}_{p}^{\prime} \\
+        \bm{0}_{p}^{\prime} & \bm{X}_{n}^{\prime} & \dots & \bm{0}_{p}^{\prime} \\
+        \vdots              & \vdots              & \dots & \vdots \\
+        \bm{0}_{p}^{\prime} & \bm{0}_{p}^{\prime} & \dots & \bm{X}_{n}^{\prime}
+      \end{bmatrix},\;
+  \bm{X} = \begin{bmatrix}
+             \bm{X}_{1} \\
+             \bm{X}_{2} \\
+             \vdots \\
+             \bm{X}_{N}
+           \end{bmatrix},\;
+  \bm{\delta} = \begin{bmatrix}
+              \bm{\delta}_{1} \\
+              \bm{\delta}_{2} \\
+              \vdots \\
+              \bm{\delta}_{N}
+            \end{bmatrix},\;
+  \bm{Z} = \begin{bmatrix}
+              \bm{Z}_{1-S} \\
+              \bm{Z}_{2-S} \\
+              \vdots \\
+              \bm{Z}_{N-S}
+            \end{bmatrix},
+$$\vspace*{1cm}
+
+\begin{alertblock}{}
+\centerline{$\hat{\bm{\Phi}}=(\bm{Z}^{\prime}\bm{Z})^{-1}\bm{Z}^{\prime}\bm{X}$}
+\end{alertblock}
+
+
+## The Kargin-Onatski Method
+
+\begin{block}{}
+Find $A$, approximating $\Phi$, minimizing $\E\|X_{t}-A(X_{t-S})\|^{2}$.
+\end{block}
+
+Let $\hat{C}_\alpha = \hat{C}_0+\alpha I$, \quad $\alpha>0$
+
+Let $\{\upsilon_{\alpha,i}\}$ be eigenfunctions of ${\hat{C}_{\alpha}}^{-1/2}\hat{C}_S' \hat{C}_S{\hat{C}_{\alpha}}^{-1/2}$, corresponding to eigenvalues $\{\hat{u}_{\alpha,i}\}$, \quad $\hat{u}_{\alpha,j} > \hat{u}_{\alpha,j+1}.$
+\begin{alertblock}{}
+$$
+  \hat{\Phi}_{\alpha,k_n}=\sum_{i=1}^{k_n}\hat{C}_\alpha^{-1/2}\upsilon_{\alpha,i}\otimes  \hat{C}_S\hat{C}_\alpha^{-1/2}\upsilon_{\alpha,i}.
+$$
+\end{alertblock}
+
+###
+$\hat{\Phi}_{\alpha,k_n}$ is a consistent estimator of $\Phi$ if  $\left\{k_n\right\}$ is sequence of positive integers such that $Kn^{-1/4}\leq k_n\leq n,$ for some $K > 0$ and $\alpha\sim n^{-1/6}$.
+
+## Simulations
+\fontsize{14}{15}\sf
+\begin{block}{}
+Let $\left\{X_t\right\}$ follow a  SFAR$(1)_S$ model,
+$$
+  X_t\left(u\right)=\Phi X_{t-S}\left(u\right)+\varepsilon_t\left(u\right),\;\;t=1,\cdots, T,
+$$
+where $\Phi$ is an integral operator with \textit{parabolic} kernel
+$$
+  k_\Phi\left(u,v\right)=\gamma_0\left(2-\left(2u-1\right)^2-\left(2v-1\right)^2\right),
+$$
+and $\gamma_0$ is such that $\Vert \Phi \Vert_\mathcal{S}^2=\int\limits_0^1\int\limits_0^1\left|k_\Phi\left(u,v\right)\right|^2du dv=0.9.$
+\end{block}\vspace*{-0.35cm}
+
+ * White noise terms $\varepsilon_t(u)$ are independent standard BM on $\left[0, 1\right]$ with variance 0.05.
+ * $B=1000$ trajectories  simulated
+ * $\Phi$ estimated using MME, ULSE and KOE.
+ * $\displaystyle\text{RMSE} = \sqrt{\frac{1}{B}\sum_{i=1}^B \Vert \hat{\Phi}_i -\Phi \Vert_\mathcal{S}^2}$
+
+## Simulations
+
+\begin{block}{}
+$T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_n=1$.
+\end{block}\vspace*{-0.3cm}
+
+\includegraphics[width=\textwidth]{images/all_methods.png}\pause
+
+
+\begin{block}{}
+$T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_n=1,2,3$. MME only
+\end{block}\vspace*{-0.3cm}
+
+\includegraphics[width=\textwidth]{images/MME.png}
+
+## Simulations: RMSE
+\fontsize{8}{9.5}\sf\tabcolsep=0.07cm\centering
+\begin{tabular}{ccccccccccccc}
+\hline
+&&& $\Vert \Phi\Vert_\mathcal{S}=0.1$&&&&$\Vert \Phi\Vert_\mathcal{S}=0.5$&&&&$\Vert \Phi\Vert_\mathcal{S}=0.9$&\\ \cline{3-5}\cline{7-9}\cline{11-13}
+n   & $k_n$ & MME    & ULSE   & KOE    & & MME    & ULSE   & KOE    & & MME    & ULSE   & KOE \\ \hline
+50  & 1     & 0.1750 & 0.1645 & 0.0951 & & 0.2403 & 0.2838 & 0.3716 & & 0.1986 & 0.2323 & 0.5096\\
+    & 2     & 0.5484 & 0.5189 & 0.0959 & & 0.4931 & 0.7000 & 0.3720 & & 0.4387 & 1.0381 & 0.5099\\
+    & 3     & 1.0239 & 0.9657 & 0.0961 & & 0.9988 & 1.1478 & 0.3721 & & 1.0435 & 1.7282 & 0.5099\\
+    & 4     & 1.5573 & 1.4934 & 0.0962 & & 1.5340 & 1.6513 & 0.3721 & & 1.6382 & 2.4725 & 0.5099\\ \hline
+100 & 1     & 0.1222 & 0.1183 & 0.0861 & & 0.2050 & 0.2579 & 0.3539 & & 0.1387 & 0.1709 & 0.4134\\
+    & 2     & 0.3662 & 0.3598 & 0.0866 & & 0.3325 & 0.6087 & 0.3541 & & 0.2743 & 0.9728 & 0.4136\\
+    & 3     & 0.6830 & 0.6798 & 0.0868 & & 0.6661 & 0.8723 & 0.3541 & & 0.6694 & 1.3925 & 0.4136\\
+    & 4     & 1.0645 & 1.0243 & 0.0868 & & 1.0245 & 1.1973 & 0.3542 & & 1.0193 & 1.9377 & 0.4136\\ \hline
+150 & 1     & 0.1033 & 0.1027 & 0.0825 & & 0.1946 & 0.2505 & 0.3460 & & 0.1205 & 0.1517 & 0.3735\\
+    & 2     & 0.2903 & 0.2900 & 0.0830 & & 0.2666 & 0.5704 & 0.3462 & & 0.2149 & 0.9478 & 0.3737\\
+    & 3     & 0.5533 & 0.5449 & 0.0831 & & 0.5387 & 0.7601 & 0.3462 & & 0.5272 & 1.2493 & 0.3736\\
+    & 4     & 0.8560 & 0.8237 & 0.0831 & & 0.8256 & 1.0040 & 0.3462 & & 0.8106 & 1.6683 & 0.3736\\ \hline
+200 & 1     & 0.0917 & 0.0935 & 0.0798 & & 0.1879 & 0.2457 & 0.3393 & & 0.1114 & 0.1419 & 0.3496\\
+    & 2     & 0.2490 & 0.2610 & 0.0803 & & 0.2285 & 0.5568 & 0.3394 & & 0.1818 & 0.9411 & 0.3497\\
+    & 3     & 0.4790 & 0.4745 & 0.0804 & & 0.4684 & 0.7047 & 0.3394 & & 0.4542 & 1.1896 & 0.3497\\
+    & 4     & 0.7438 & 0.7127 & 0.0804 & & 0.7199 & 0.9042 & 0.3394 & & 0.7040 & 1.5134 & 0.3497\\ \hline
+\end{tabular}
+
+
+# Forecasting
+
+## Forecasting
+
+Let $\bm{X}_T=\left(X_1,X_2,\dots,X_T\right)'$.\newline
+Let $G$ be closure of $\left\{\ell_0\bm{X}_T;\;\ell_0\in \mathcal{L}\left(H^T,H\right)\right\}$.
+
+\begin{alertblock}{}
+Best linear $h$-step predictor of $X_{T+h}$ is projection of $X_{T+h}$ on $G$, i.e., $\hat{X}_{T+h}=P_G X_{T+h}$.
+\end{alertblock}\pause
+
+\begin{block}{Proposition (based on Bosq 2014)}
+For $h \in {\mathbb{N}}$ the following statements are equivalent:
+\begin{enumerate}\tightlist
+\item There exists $\ell_0\in\mathcal{L}\left(H^T,H\right)$ such that $C_{\bm{X}_T ,X_{ T + h}} = \ell_0 C_{\bm{X}_T}.$
+\item $P_G X_{T + h} = \ell_0\bm{X}_T$ for some $\ell_0\in \mathcal{L}\left(H^T,H\right).$
+\end{enumerate}
+\end{block}\pause\vspace*{-0.2cm}
+How to find $\ell_0\in\mathcal{L}\left(H^T,H\right)$  such that $C_{\bm{X}_T ,X_{ T + h}} = \ell_0 C_{\bm{X}_T}$?
+
+## Forecasting
+
+\alert{Forecast horizon} $h=aS+c$, $a\geq 0$ and $0\leq c<S$.
+$$
+  C_{\bm{X}_n ,X_{ n + h}}\left(\bm{x}\right)
+    = \E\left(\left\langle \bm{X}_n,\bm{x}\right\rangle_{H^n} X_{n+h}\right)
+    = \Phi^{a+1}_{n-S+c}C_{\bm{X}_n}\left(\bm{x}\right),
+$$
+where $\Phi^{i}_{j}$ is an $n$-vector of zeros with $\Phi^{i}$ in $j$th position.
+\begin{alertblock}{}
+\centerline{$\hat{X}_{n+h}=P_G X_{n+h}=\Phi^{a+1}_{n-S+c}{\bm{X}_n }=\Phi^{a+1}X_{n-S+c}$}
+\end{alertblock}
+
+###
+\fontsize{14}{15}\sf
+Based on KOE, 1-step ahead predictor of $X_{n+1}$ is:
+$$
+ \hat{X}_{n+1}=\sum_{i=1}^{k_n}<X_{n-S+1},\hat{z}_{\alpha,i}>    \hat{C}_{S}(\hat{z}_{\alpha,i}),
+$$
+$$
+\text{where}\qquad
+      \hat{z}_{\alpha,i}=\sum_{j=1}^{q}\hat{u}_{j}^{-1/2}\left  \langle{\upsilon}_{\alpha,i},\hat\nu_{j}
+      \right\rangle\hat{\nu}_{j}+\alpha{\upsilon}_{\alpha,i}.
+$$
+Select $q$ by cumulative variance method and set $k_n=q$.
+
+# SFAR($P$)$_S$ processes
+
+## SFAR($P$)$_S$ processes
+
+### Definition
+A sequence $\{X_{t};t\in\mathbb{Z}\}$ of functional random variables is said to be a seasonal functional autoregressive process of order $P$ with seasonality $S$ if
+$$
+ X_{t}-\mu=\Phi_{1}\left(X_{t-S}-\mu\right)+\dots+\Phi_{P}\left(X_{t-PS}-\mu\right)+\varepsilon_{t},
+$$
+where $\{\varepsilon_{t}, t\in\mathbb{Z}\}$ is H-white noise, $\mu\in H$, and $\Phi_{1},\dots,\Phi_{P}\in\mathcal{L}(H)$, with $\Phi_{P}\neq 0$.
+
+## SFAR($P$)$_S$ processes
+
+Let $Y_t=\left(X_t,X_{t-S},\dots,X_{t-PS+S}\right)'$, $\varepsilon'_t=\left(\varepsilon_t,0,\dots,0\right)'$,  where $0$ appears $P-1$ times, and
+\begin{align}
+  \bm{\Phi}=
+    \begin{bmatrix}
+      \Phi_1 & \Phi_2 & \dots  & \Phi_P \\
+      I      & 0      & \dots  & 0 \\
+      0      & I      & \dots  & 0\\
+      \vdots & \vdots & \ddots & \vdots\\
+      0      & 0      & \dots  & 0
+    \end{bmatrix},
+\end{align}
+where $I$ and $0$ denote identity and zero operator on $H$.
+
+\begin{lemma}
+  If $X$ is a SFAR$(P)_{S}$ associated with associated with $(\varepsilon,\phi_{1},\dots,\phi_{P})$, then $Y$ is a SFAR$(1)_{S}$ with values in the product Hilbert space $H^P$ associated with $\left(\varepsilon',\bm{\phi}\right).$
+\end{lemma}
+
+## SFAR($P$)$_S$ processes
+\begin{Theorem}
+  Let $X_n$ be a SFAR$(P)_S$ zero-mean process associated with $\left(\varepsilon , \phi_1,\phi_2,\dots,\phi_P\right)$. Suppose that there exist $\nu\in H$ and $\alpha_1,\dots,\alpha_P\in {\mathbb{R}}$, $\alpha_P\neq 0$, such that $\phi_j\left(\nu\right) =\alpha_j\nu_j$, $j=1,\dots, P$ and $\E\left\langle\varepsilon_0,\nu\right\rangle^2>0$. Then, $\left(\left\langle X_n,\nu \right\rangle,\;n \in {\mathbb{Z}}\right)$ is a SAR$(P)$ process, i.e.,
+  \begin{align}
+    \langle X_n,\nu\rangle = \sum_{j=1}^P \alpha_j \langle X_{n-jS},\nu \rangle + \langle \varepsilon_n,\nu \rangle,
+      \qquad n\in {\mathbb{Z}}.
+  \end{align}
+\end{Theorem}
+
+## SFAR($P$)$_S$ processes
+\begin{Theorem}
+  If $X$ is a standard SFAR$(P)_S$ process, then
+  \begin{align}
+    C_h & = \sum_{j=1}^P\phi_jC_{h-jS},\qquad h=1,2,\dots, \\
+    C_0 & = \sum_{j=1}^P\phi_jC_{jS}+C_\varepsilon,
+  \end{align}
+  where $C_\varepsilon$ is the covariance operator of the innovation process $\varepsilon.$
+\end{Theorem}
