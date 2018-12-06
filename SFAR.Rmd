@@ -20,6 +20,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, cache=TRUE, dev.args=list(bg=grey(0.9), pointsize=11))
 library(rwalkr)
 library(tidyverse)
+library(sugrrants)
 ```
 
 # Motivation
@@ -41,53 +42,45 @@ flu <- grag %>%
   )
 ```
 
+```{r mortality3}
+flu %>%
+  ggplot(aes(x = ager12, y = Count, group=time, col=time)) +
+    geom_line() +
+    facet_grid(~sex) +
+    xlab("Age group") + ylab("Log deaths") +
+    guides(col=FALSE) +
+    scale_color_gradientn(colours=rainbow(15)) +
+    scale_y_log10()
+```
+
+## Flu/respiratory mortality (US)
+
 ```{r mortality1}
 flu %>%
-  ggplot(aes(x = Time, y = Count/1000, col = sex)) +
+  ggplot(aes(x = Time, y = Count, col = sex)) +
     geom_line() +
     facet_wrap(~ager12, nrow = 3, scales = "free") +
-    xlab("Year") + ylab("Deaths (thousands)") #+
+    xlab("Year") + ylab("Deaths") #+
 #    guides(col=FALSE)
 ```
 
 ## Flu/respiratory mortality (US)
 
-```{r mortality2}
-
-flu %>%
-  ggplot(aes(x = ager12, y = Count/1000, group=time, col=time)) +
-    geom_line() +
-    facet_grid(month~sex) +
-    xlab("Age group") + ylab("Deaths (thousands)") +
-    guides(col=FALSE) +
-    scale_color_gradientn(colours=rainbow(15))
-```
-
-
-## Flu/respiratory mortality (US)
-
-```{r flinders}
-ped_walk <- walk_melb(from = as.Date("2018-01-01"))
+```{r flindersdata}
+ped_walk <- walk_melb(from = as.Date("2016-01-01"), to = as.Date("2016-12-31"))
 flinders <- ped_walk %>%
   filter(Sensor == "Flinders Street Station Underpass") %>%
   mutate(
     day = lubridate::wday(Date, label=TRUE),
     hour = lubridate::hour(Date_Time)
   )
+```
+
+```{r flinders_timeplot, dependson="flindersdata"}
 flinders %>%
   ggplot(aes(x=hour, y=Count, group=Date)) +
     geom_line() +
     facet_grid(~ day)
-```
-
-```{r flinders}
-p <- flinders %>%
-  mutate(Weekend = if_else(day %in% c("Sat", "Sun"), "Weekend", "Weekday")) %>%
-  frame_calendar(x = hour, y = Count, date = Date) %>%
-  ggplot(aes(x = .hour, y = .Count, group = Date, colour = Weekend)) +
-  geom_line() +
-  theme(legend.position = "bottom")
-prettify(p)
 ```
 
 ## Examples
@@ -96,13 +89,13 @@ prettify(p)
   $X_t(u)$ where $t=1,\dots,T$ indexes regularly spaced time and $u$ is a continuous variable in $\mathbb{R}$ or $\mathbb{R}^2$
 \end{block}
 
-1. $X_t(u)=$ mortality rate for people aged $u$ in month $t$.
+1. $X_t(u)=$ mortality rate for people aged $u$ in month \rlap{$t$.}
 
 2. $X_t(u)=$ vegetation index at location $u$ in month $t$, measured by average satellite observations.
 
 Sometimes $u$ may denote a second time variable.
 
-3. $X_t(u)=$ pollution level observed every 30 minutes. $u$ denotes time-of-day, $t$ denotes day.
+3. $X_t(u)=$ pedestrian count observed every hour.\newline $u$ denotes time-of-day, $t$ denotes day.
 
 \vspace*{10cm}
 
@@ -360,6 +353,7 @@ T   & $k_T$ & MME    & ULSE   & KOE    & & MME    & ULSE   & KOE    & & MME    &
 \end{tabular}
 
 
+
 # Forecasting
 
 ## Forecasting
@@ -406,6 +400,38 @@ $$
 $$
 Select $q$ by cumulative variance method and set $k_T=q$.
 
+
+# Application: pedestrian counts
+
+## Application: pedestrian counts
+
+```{r flinders_timeplot2, dependson="flindersdata"}
+flinders %>%
+  ggplot(aes(x=hour, y=Count, group=Date)) +
+    geom_line() +
+    facet_grid(~ day)
+```
+
+## Application: pedestrian counts
+
+The estimated kernel of the autocorrelation operator using MME and ULSE methods.
+
+\includegraphics[width=\textwidth]{images/kernel_Flinders.png}
+
+## Application: pedestrian counts
+
+### 1-step predictors for the last 7 days of the dataset
+\centering\begin{tabular}{rrrrrr}
+&\multicolumn{2}{c}{MAE}&&\multicolumn{2}{c}{RMSE}\\ \cline{2-3}\cline{5-6}
+$k_T$&MME&ULSE&&MME&ULSE\\ \hline
+1 & 198.7 & 197.9 & & 201.7 & 201.0\\
+2 & 202.8 & 99.1  & & 205.6 & 99.7\\
+3 & 315.3 & 199.8 & & 319.7 & 207.0\\
+4 & 418.4 & 155.8 & & 423.4 & 157.5\\
+5 & 508.0 & 267.5 & & 515.0 & 301.6\\
+6 & 645.6 & 168.0 & & 655.2 & 169.5
+\end{tabular}
+
 # SFAR($P$)$_S$ processes
 
 ## SFAR($P$)$_S$ processes
@@ -419,8 +445,8 @@ where $\{\varepsilon_{t}, t\in\mathbb{Z}\}$ is H-white noise, $\mu\in H$, and $\
 
 ## SFAR($P$)$_S$ processes
 
-Let $Y_t=\left(X_t,X_{t-S},\dots,X_{t-PS+S}\right)'$, $\varepsilon'_t=\left(\varepsilon_t,0,\dots,0\right)'$,  where $0$ appears $P-1$ times, and
-\begin{align}
+Let $Y_t=\left(X_t,X_{t-S},\dots,X_{t-PS+S}\right)'$, $\varepsilon'_t=\left(\varepsilon_t,0,\dots,0\right)'$, and
+$$
   \bm{\Phi}=
     \begin{bmatrix}
       \Phi_1 & \Phi_2 & \dots  & \Phi_P \\
@@ -429,7 +455,7 @@ Let $Y_t=\left(X_t,X_{t-S},\dots,X_{t-PS+S}\right)'$, $\varepsilon'_t=\left(\var
       \vdots & \vdots & \ddots & \vdots\\
       0      & 0      & \dots  & 0
     \end{bmatrix},
-\end{align}
+$$
 where $I$ and $0$ denote identity and zero operator on $H$.
 
 \begin{lemma}
@@ -439,18 +465,18 @@ where $I$ and $0$ denote identity and zero operator on $H$.
 ## SFAR($P$)$_S$ processes
 \begin{Theorem}
   Let $X_n$ be a SFAR$(P)_S$ zero-mean process associated with $\left(\varepsilon , \phi_1,\phi_2,\dots,\phi_P\right)$. Suppose that there exist $\nu\in H$ and $\alpha_1,\dots,\alpha_P\in {\mathbb{R}}$, $\alpha_P\neq 0$, such that $\phi_j\left(\nu\right) =\alpha_j\nu_j$, $j=1,\dots, P$ and $\E\left\langle\varepsilon_0,\nu\right\rangle^2>0$. Then, $\left(\left\langle X_t,\nu \right\rangle,\;t \in {\mathbb{Z}}\right)$ is a SAR$(P)$ process, i.e.,
-  \begin{align}
+  $$
     \langle X_t,\nu\rangle = \sum_{j=1}^P \alpha_j \langle X_{t-jS},\nu \rangle + \langle \varepsilon_t,\nu \rangle,
       \qquad t\in {\mathbb{Z}}.
-  \end{align}
+  $$
 \end{Theorem}
 
 ## SFAR($P$)$_S$ processes
 \begin{Theorem}
   If $X$ is a standard SFAR$(P)_S$ process, then
-  \begin{align}
+  \begin{align*}
     C_h & = \sum_{j=1}^P\phi_jC_{h-jS},\qquad h=1,2,\dots, \\
     C_0 & = \sum_{j=1}^P\phi_jC_{jS}+C_\varepsilon,
-  \end{align}
+  \end{align*}
   where $C_\varepsilon$ is the covariance operator of the innovation process $\varepsilon.$
 \end{Theorem}
