@@ -18,6 +18,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, cache=TRUE, dev.args=list(bg=grey(0.9), pointsize=11))
+library(rwalkr)
 library(tidyverse)
 ```
 
@@ -62,6 +63,33 @@ flu %>%
     scale_color_gradientn(colours=rainbow(15))
 ```
 
+
+## Flu/respiratory mortality (US)
+
+```{r flinders}
+ped_walk <- walk_melb(from = as.Date("2018-01-01"))
+flinders <- ped_walk %>%
+  filter(Sensor == "Flinders Street Station Underpass") %>%
+  mutate(
+    day = lubridate::wday(Date, label=TRUE),
+    hour = lubridate::hour(Date_Time)
+  )
+flinders %>%
+  ggplot(aes(x=hour, y=Count, group=Date)) +
+    geom_line() +
+    facet_grid(~ day)
+```
+
+```{r flinders}
+p <- flinders %>%
+  mutate(Weekend = if_else(day %in% c("Sat", "Sun"), "Weekend", "Weekday")) %>%
+  frame_calendar(x = hour, y = Count, date = Date) %>%
+  ggplot(aes(x = .hour, y = .Count, group = Date, colour = Weekend)) +
+  geom_line() +
+  theme(legend.position = "bottom")
+prettify(p)
+```
+
 ## Examples
 
 \begin{block}{Notation}
@@ -89,13 +117,6 @@ Sometimes $u$ may denote a second time variable.
 
 Seasonality occurs when $X_t(u)$ is influenced by seasonal factors (e.g., the quarter of the year, the month, the day of the week, etc.).
 
-\vspace*{1.5cm}
-\begin{alertblock}{}
-  A (possibly de-trended) series is seasonal of period $S$ if
-  $$
-    \E[X_{t}(u)] = \E[X_{t+S}(u)].
-  $$
-\end{alertblock}
 \vspace*{10cm}
 
 ## Functional autoregression
@@ -161,9 +182,9 @@ Seasonality occurs when $X_t(u)$ is influenced by seasonal factors (e.g., the qu
  * $\Phi\ne 0$\pause
 
 ### Stationarity of a SFAR(1)$_S$ process
-If there exists an integer $j_0\geq 1$ such that $\|\Phi^{j_0}\|_\mathcal{L}<1$,
+If there exists an integer $M\geq 1$ such that $\|\Phi^{M}\|_\mathcal{L}<1$,
 $$
-  \text{then}\qquad    X_t=\Phi(X_{t-S})+\varepsilon_t,
+\hspace*{-3.8cm}\text{then}\hspace*{2.8cm} X_t=\Phi(X_{t-S})+\varepsilon_t,
 $$
 has a unique stationary solution given by
 $$
@@ -171,72 +192,17 @@ $$
 $$
 where the series converges in $L^2_{H}$ with probability 1.
 
-
-## SFAR(1)$_S$ processes
-\fontsize{14}{15}\sf
-
-\begin{alertblock}{}
-  \centerline{$X_{t}=\Phi(X_{t-S})+\varepsilon_{t},$}
-\end{alertblock}
-\vspace*{-0.3cm}
-
- * $\{\bm{\varepsilon}_{t}\}$ is a functional $H$-white noise process
- * $\Phi$ is Hilbert-Schmidt integral operator in $\mathcal{L}(H)$
- * $\Phi\ne 0$
-
-### Link to SAR(1)$_S$ processes
-Let $$\Phi=\sum\limits_{j=1}\alpha_j e_j\otimes e_j$$ be a symmetric compact operator on $H$.
-
-Then, $X_t$ is a SFAR(1)$_S$ process if and only if $\left\langle X_t, e_k\right\rangle$ is a $SAR(1)_S$ process.
-
-## SFAR(1)$_S$ processes
-\fontsize{13}{15}\sf
-
-Let ${\bf{Y}}_{t}=\left(X_{t},\dots,X_{t-S+1}\right)^{\prime}$ and $\bm{\varepsilon}_{t}=\left(\varepsilon_{t},0,\dots,0\right)^{\prime}$.\newline
-Define operator $\bm{\rho}$ on $H^{S}$:
-$$
-  \bm{\rho} =
-    \begin{bmatrix}
-      0      & 0      & \dots & 0      & \Phi \\
-      I      & 0      & \dots & 0      & 0 \\
-      0      & I      & \dots & 0      & 0 \\
-      \vdots & \vdots & \dots & \vdots & \vdots \\
-      0      & 0      & \dots & I      & 0
-    \end{bmatrix},
-  \quad\text{where $I$ is identity operator.}
-$$
-
-### Lemma
-  If $\bm{X}$ is SFAR(1)$_S$ process, associated with $(\bm{\varepsilon},\Phi)$, then $\bm{Y}$ is FAR(1) with values in product Hilbert space $H^S$ associated with $\left(\bm{\varepsilon},\bm{\rho}\right)$, i.e., $\bm{Y}_n=\bm{\rho}\bm{Y}_{n-1}+\bm{\varepsilon}_n.$
-
-## SFAR(1)$_S$ processes
-
-### Theorem
-Let $\mathcal{L}(H^S)$ be space of bounded linear operators on $H^S$ equipped with norm $\|\cdot\|_{\mathcal{L}^S}$. If
-$$
-  \|\bm{\rho}^{j_{0}}\|_{\mathcal{L}^S}<1,
-  \quad\text{for some $j_{0}\geq 1$},
-$$
-then SFAR(1)$_S$ has unique stationary solution given by
-$$
-  X_t=\sum_{j=0}^\infty
-    (\bm{\pi}\bm{\rho})(\bm{\varepsilon}_{t-j}),
-$$
-where the series converges in $L^2_{H^S}$ with probability 1 and $\bm{\pi}$ is the projector of $H^S$ onto $H$, defined as $\bm{\pi}(x_1,\dots,x_S)=x_1,$\quad $(x_1,\dots,x_S)\in H^S.$
-
 ## Limit Theorems for SFAR(1)$_S$ processes
 
 ### Theorem: Law of large numbers for $\bm{X}$
-If $\bm{X}$ is a standard SFAR(1)$_S$ then, as $T\rightarrow\infty$,
-
+If $\bm{X}$ is a standard SFAR(1)$_S$ then, as $T\rightarrow\infty$,\vspace*{0.2cm}
 $$
   \frac{T^{0.25}}{(\log{T})^{\beta}}{\frac{(X_1+X_2+\dots+X_T)}{T}}\rightarrow 0,\qquad\text{for $\beta>0.5$.}
 $$
 
 ### Central Limit Theorem
 
-Let $\bm{X}$ be a standard SFAR(1)$_S$ associated with a strong white noise $\bm{\varepsilon}$ and such that $I-\Phi$ is invertible. Then
-
+Let $\bm{X}$ be a standard SFAR(1)$_S$ associated with a strong white noise $\bm{\varepsilon}$ and such that $I-\Phi$ is invertible. Then\vspace*{0.2cm}
 $$
   \frac{(X_1+X_2+\dots+X_T)}{\sqrt{T}}\rightarrow\mathcal{N}(0,\Gamma),
 $$
@@ -266,44 +232,31 @@ For any $x\in H$,
 
  * $\displaystyle\hat{\Phi}(X)=\sum_{j=1}^{J}\frac{\hat{C}_S^X(\hat{\nu}_{j})}{\hat{\lambda}_{j}} \left\langle{x},\hat{\nu}_{j}\right\rangle$
 
-## Yule-Walker estimates
-
-\begin{block}{}
-For SFAR$(P)_S$ processes,
-\begin{align*}
-  C_0 & =\Phi C_{-S}+C_{\varepsilon}\\
-  C_h & =\Phi C_{h-S}, \quad h\geq 1.
-\end{align*}
-\end{block}
-
- * Replace $C_j$ with empirical counterpart to estimate $\Phi$ and $C_{\varepsilon}.$
-
-
 ## Unconditional Least Squares
 
 \begin{block}{}
-Let $X_{tk}=\left\langle{X_{n}},\nu_{k}\right\rangle$ be projection of $t$th observation onto $k$th largest FPC.
+Let $X_{tk}=\left\langle{X_{t}},\nu_{k}\right\rangle$ be projection of the $t$th observation onto the $k$th largest FPC.
 $$
-  X_{nk}=\sum_{j=1}^{p}\Phi_{kj}X_{n-S,j}+\delta_{nk}, \quad k=1,\dots,p
+  X_{tk}=\sum_{j=1}^{p}\Phi_{kj}X_{t-S,j}+\delta_{tk}, \quad k=1,\dots,p
 $$
-where $\Phi_{kj}=\left\langle{\Phi(\nu_{j})},\nu_{k}\right\rangle.$ Note that the $\delta_{nk}$ are not iid.
+where $\Phi_{kj}=\left\langle{\Phi(\nu_{j})},\nu_{k}\right\rangle.$ Note that the $\delta_{tk}$ are not iid.
 \end{block}
 
  * Replace $\nu_{k}$ by $\hat{\nu}_{k}$ to get $\hat{X}_{tk}$
 
 ## Unconditional Least Squares
 
-Set $\bm{X}_{n}=(\hat{X}_{n1},\dots,\hat{X}_{np})^{\prime}$, $\bm{\delta}_{n}=(\delta_{n1},\dots,\delta_{np})^{\prime}$,
+Set $\bm{X}_{t}=(\hat{X}_{t1},\dots,\hat{X}_{tp})^{\prime}$, $\bm{\delta}_{t}=(\delta_{t1},\dots,\delta_{tp})^{\prime}$,
 $$
   \bm{\Phi}=(\Phi_{11},\dots,\Phi_{1p},\Phi_{21},\dots,\Phi_{2p},\dots,\Phi_{p1},\dots,\Phi_{pp})^{\prime}.
 $$
 $$
-  \bm{Z}_{n} =
+  \bm{Z}_{t} =
       \begin{bmatrix}
-        \bm{X}_{n}^{\prime} & \bm{0}_{p}^{\prime} & \dots & \bm{0}_{p}^{\prime} \\
-        \bm{0}_{p}^{\prime} & \bm{X}_{n}^{\prime} & \dots & \bm{0}_{p}^{\prime} \\
+        \bm{X}_{t}^{\prime} & \bm{0}_{p}^{\prime} & \dots & \bm{0}_{p}^{\prime} \\
+        \bm{0}_{p}^{\prime} & \bm{X}_{t}^{\prime} & \dots & \bm{0}_{p}^{\prime} \\
         \vdots              & \vdots              & \dots & \vdots \\
-        \bm{0}_{p}^{\prime} & \bm{0}_{p}^{\prime} & \dots & \bm{X}_{n}^{\prime}
+        \bm{0}_{p}^{\prime} & \bm{0}_{p}^{\prime} & \dots & \bm{X}_{t}^{\prime}
       \end{bmatrix},\;
   \bm{X} = \begin{bmatrix}
              \bm{X}_{1} \\
@@ -341,12 +294,12 @@ Let $\hat{C}_\alpha = \hat{C}_0+\alpha I$, \quad $\alpha>0$
 Let $\{\upsilon_{\alpha,i}\}$ be eigenfunctions of ${\hat{C}_{\alpha}}^{-1/2}\hat{C}_S' \hat{C}_S{\hat{C}_{\alpha}}^{-1/2}$, corresponding to eigenvalues $\{\hat{u}_{\alpha,i}\}$, \quad $\hat{u}_{\alpha,j} > \hat{u}_{\alpha,j+1}.$
 \begin{alertblock}{}
 $$
-  \hat{\Phi}_{\alpha,k_n}=\sum_{i=1}^{k_n}\hat{C}_\alpha^{-1/2}\upsilon_{\alpha,i}\otimes  \hat{C}_S\hat{C}_\alpha^{-1/2}\upsilon_{\alpha,i}.
+  \hat{\Phi}_{\alpha,k_T}=\sum_{i=1}^{k_T}\hat{C}_\alpha^{-1/2}\upsilon_{\alpha,i}\otimes  \hat{C}_S\hat{C}_\alpha^{-1/2}\upsilon_{\alpha,i}.
 $$
 \end{alertblock}
 
 ###
-$\hat{\Phi}_{\alpha,k_n}$ is a consistent estimator of $\Phi$ if  $\left\{k_n\right\}$ is sequence of positive integers such that $Kn^{-1/4}\leq k_n\leq n,$ for some $K > 0$ and $\alpha\sim n^{-1/6}$.
+$\hat{\Phi}_{\alpha,k_T}$ is a consistent estimator of $\Phi$ if  $\left\{k_T\right\}$ is sequence of positive integers such that $KT^{-1/4}\leq k_T\leq T,$ for some $K > 0$ and $\alpha\sim T^{-1/6}$.
 
 ## Simulations
 \fontsize{14}{15}\sf
@@ -370,14 +323,14 @@ and $\gamma_0$ is such that $\Vert \Phi \Vert_\mathcal{S}^2=\int\limits_0^1\int\
 ## Simulations
 
 \begin{block}{}
-$T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_n=1$.
+$T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_T=1$.
 \end{block}\vspace*{-0.3cm}
 
 \includegraphics[width=\textwidth]{images/all_methods.png}\pause
 
 
 \begin{block}{}
-$T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_n=1,2,3$. MME only
+$T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_T=1,2,3$. MME only
 \end{block}\vspace*{-0.3cm}
 
 \includegraphics[width=\textwidth]{images/MME.png}
@@ -387,7 +340,7 @@ $T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_n=1,2,3$. MME only
 \begin{tabular}{ccccccccccccc}
 \hline
 &&& $\Vert \Phi\Vert_\mathcal{S}=0.1$&&&&$\Vert \Phi\Vert_\mathcal{S}=0.5$&&&&$\Vert \Phi\Vert_\mathcal{S}=0.9$&\\ \cline{3-5}\cline{7-9}\cline{11-13}
-n   & $k_n$ & MME    & ULSE   & KOE    & & MME    & ULSE   & KOE    & & MME    & ULSE   & KOE \\ \hline
+T   & $k_T$ & MME    & ULSE   & KOE    & & MME    & ULSE   & KOE    & & MME    & ULSE   & KOE \\ \hline
 50  & 1     & 0.1750 & 0.1645 & 0.0951 & & 0.2403 & 0.2838 & 0.3716 & & 0.1986 & 0.2323 & 0.5096\\
     & 2     & 0.5484 & 0.5189 & 0.0959 & & 0.4931 & 0.7000 & 0.3720 & & 0.4387 & 1.0381 & 0.5099\\
     & 3     & 1.0239 & 0.9657 & 0.0961 & & 0.9988 & 1.1478 & 0.3721 & & 1.0435 & 1.7282 & 0.5099\\
@@ -431,27 +384,27 @@ How to find $\ell_0\in\mathcal{L}\left(H^T,H\right)$  such that $C_{\bm{X}_T ,X_
 
 \alert{Forecast horizon} $h=aS+c$, $a\geq 0$ and $0\leq c<S$.
 $$
-  C_{\bm{X}_n ,X_{ n + h}}\left(\bm{x}\right)
-    = \E\left(\left\langle \bm{X}_n,\bm{x}\right\rangle_{H^n} X_{n+h}\right)
-    = \Phi^{a+1}_{n-S+c}C_{\bm{X}_n}\left(\bm{x}\right),
+  C_{\bm{X}_T ,X_{T + h}}\left(\bm{x}\right)
+    = \E\left(\left\langle \bm{X}_T,\bm{x}\right\rangle_{H^T} X_{T+h}\right)
+    = \Phi^{a+1}_{T-S+c}C_{\bm{X}_T}\left(\bm{x}\right),
 $$
-where $\Phi^{i}_{j}$ is an $n$-vector of zeros with $\Phi^{i}$ in $j$th position.
+where $\Phi^{i}_{j}$ is an $T$-vector of zeros with $\Phi^{i}$ in $j$th position.
 \begin{alertblock}{}
-\centerline{$\hat{X}_{n+h}=P_G X_{n+h}=\Phi^{a+1}_{n-S+c}{\bm{X}_n }=\Phi^{a+1}X_{n-S+c}$}
+\centerline{$\hat{X}_{T+h}=P_G X_{T+h}=\Phi^{a+1}_{T-S+c}{\bm{X}_T}=\Phi^{a+1}X_{T-S+c}$}
 \end{alertblock}
 
 ###
 \fontsize{14}{15}\sf
-Based on KOE, 1-step ahead predictor of $X_{n+1}$ is:
+Based on KOE, 1-step ahead predictor of $X_{T+1}$ is:
 $$
- \hat{X}_{n+1}=\sum_{i=1}^{k_n}<X_{n-S+1},\hat{z}_{\alpha,i}>    \hat{C}_{S}(\hat{z}_{\alpha,i}),
+ \hat{X}_{T+1}=\sum_{i=1}^{k_T}<X_{T-S+1},\hat{z}_{\alpha,i}>    \hat{C}_{S}(\hat{z}_{\alpha,i}),
 $$
 $$
 \text{where}\qquad
       \hat{z}_{\alpha,i}=\sum_{j=1}^{q}\hat{u}_{j}^{-1/2}\left  \langle{\upsilon}_{\alpha,i},\hat\nu_{j}
       \right\rangle\hat{\nu}_{j}+\alpha{\upsilon}_{\alpha,i}.
 $$
-Select $q$ by cumulative variance method and set $k_n=q$.
+Select $q$ by cumulative variance method and set $k_T=q$.
 
 # SFAR($P$)$_S$ processes
 
@@ -485,10 +438,10 @@ where $I$ and $0$ denote identity and zero operator on $H$.
 
 ## SFAR($P$)$_S$ processes
 \begin{Theorem}
-  Let $X_n$ be a SFAR$(P)_S$ zero-mean process associated with $\left(\varepsilon , \phi_1,\phi_2,\dots,\phi_P\right)$. Suppose that there exist $\nu\in H$ and $\alpha_1,\dots,\alpha_P\in {\mathbb{R}}$, $\alpha_P\neq 0$, such that $\phi_j\left(\nu\right) =\alpha_j\nu_j$, $j=1,\dots, P$ and $\E\left\langle\varepsilon_0,\nu\right\rangle^2>0$. Then, $\left(\left\langle X_n,\nu \right\rangle,\;n \in {\mathbb{Z}}\right)$ is a SAR$(P)$ process, i.e.,
+  Let $X_n$ be a SFAR$(P)_S$ zero-mean process associated with $\left(\varepsilon , \phi_1,\phi_2,\dots,\phi_P\right)$. Suppose that there exist $\nu\in H$ and $\alpha_1,\dots,\alpha_P\in {\mathbb{R}}$, $\alpha_P\neq 0$, such that $\phi_j\left(\nu\right) =\alpha_j\nu_j$, $j=1,\dots, P$ and $\E\left\langle\varepsilon_0,\nu\right\rangle^2>0$. Then, $\left(\left\langle X_t,\nu \right\rangle,\;t \in {\mathbb{Z}}\right)$ is a SAR$(P)$ process, i.e.,
   \begin{align}
-    \langle X_n,\nu\rangle = \sum_{j=1}^P \alpha_j \langle X_{n-jS},\nu \rangle + \langle \varepsilon_n,\nu \rangle,
-      \qquad n\in {\mathbb{Z}}.
+    \langle X_t,\nu\rangle = \sum_{j=1}^P \alpha_j \langle X_{t-jS},\nu \rangle + \langle \varepsilon_t,\nu \rangle,
+      \qquad t\in {\mathbb{Z}}.
   \end{align}
 \end{Theorem}
 
