@@ -99,14 +99,11 @@ Sometimes $u$ may denote a second time variable.
 
 \vspace*{10cm}
 
-
-
 ## Seasonality
 
 \begin{block}{Notation}
   $X_t(u)$ where $t=1,\dots,T$ indexes regularly spaced time and $u$ is a continuous variable in $\mathbb{R}$ or $\mathbb{R}^2$
 \end{block}
-
 
 Seasonality occurs when $X_t(u)$ is influenced by seasonal factors (e.g., the quarter of the year, the month, the day of the week, etc.).
 
@@ -184,6 +181,58 @@ $$
   X_t=\sum_{j=0}^\infty \Phi^{j}(\varepsilon_{t-jS}),
 $$
 where the series converges in $L^2_{H}$ with probability 1.
+
+## SFAR(1)$_S$ processes
+\fontsize{14}{15}\sf
+
+\begin{alertblock}{}
+  \centerline{$X_{t}=\Phi(X_{t-S})+\varepsilon_{t},$}
+\end{alertblock}
+\vspace*{-0.3cm}
+
+ * $\{\bm{\varepsilon}_{t}\}$ is a functional $H$-white noise process
+ * $\Phi$ is Hilbert-Schmidt integral operator in $\mathcal{L}(H)$
+ * $\Phi\ne 0$
+
+### Link to SAR(1)$_S$ processes
+Let $$\Phi=\sum\limits_{j=1}\alpha_j e_j\otimes e_j$$ be a symmetric compact operator on $H$.
+
+Then, $X_t$ is a SFAR(1)$_S$ process if and only if $\left\langle X_t, e_k\right\rangle$ is a $SAR(1)_S$ process.
+
+## SFAR(1)$_S$ processes
+\fontsize{13}{15}\sf
+
+Let ${\bf{Y}}_{t}=\left(X_{t},\dots,X_{t-S+1}\right)^{\prime}$ and $\bm{\varepsilon}_{t}=\left(\varepsilon_{t},0,\dots,0\right)^{\prime}$.\newline
+Define operator $\bm{\rho}$ on $H^{S}$:
+$$
+  \bm{\rho} =
+    \begin{bmatrix}
+      0      & 0      & \dots & 0      & \Phi \\
+      I      & 0      & \dots & 0      & 0 \\
+      0      & I      & \dots & 0      & 0 \\
+      \vdots & \vdots & \dots & \vdots & \vdots \\
+      0      & 0      & \dots & I      & 0
+    \end{bmatrix},
+  \quad\text{where $I$ is identity operator.}
+$$
+
+### Lemma
+  If $\bm{X}$ is SFAR(1)$_S$ process, associated with $(\bm{\varepsilon},\Phi)$, then $\bm{Y}$ is FAR(1) with values in product Hilbert space $H^S$ associated with $\left(\bm{\varepsilon},\bm{\rho}\right)$, i.e., $\bm{Y}_n=\bm{\rho}\bm{Y}_{n-1}+\bm{\varepsilon}_n.$
+
+## SFAR(1)$_S$ processes
+
+### Theorem
+Let $\mathcal{L}(H^S)$ be space of bounded linear operators on $H^S$ equipped with norm $\|\cdot\|_{\mathcal{L}^S}$. If
+$$
+  \|\bm{\rho}^{M}\|_{\mathcal{L}^S}<1,
+  \quad\text{for some $M\geq 1$},
+$$
+then SFAR(1)$_S$ has unique stationary solution given by
+$$
+  X_t=\sum_{j=0}^\infty
+    (\bm{\pi}\bm{\rho})(\bm{\varepsilon}_{t-j}),
+$$
+where the series converges in $L^2_{H^S}$ with probability 1 and $\bm{\pi}$ is the projector of $H^S$ onto $H$, defined as $\bm{\pi}(x_1,\dots,x_S)=x_1,$\quad $(x_1,\dots,x_S)\in H^S.$
 
 ## Limit Theorems for SFAR(1)$_S$ processes
 
@@ -275,7 +324,6 @@ $$\vspace*{1cm}
 \centerline{$\hat{\bm{\Phi}}=(\bm{Z}^{\prime}\bm{Z})^{-1}\bm{Z}^{\prime}\bm{X}$}
 \end{alertblock}
 
-
 ## The Kargin-Onatski Method
 
 \begin{block}{}
@@ -321,7 +369,6 @@ $T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_T=1$.
 
 \includegraphics[width=\textwidth]{images/all_methods.png}\pause
 
-
 \begin{block}{}
 $T=200$, $\Vert \Phi\Vert_\mathcal{S}=0.9$ and $k_T=1,2,3$. MME only
 \end{block}\vspace*{-0.3cm}
@@ -351,8 +398,6 @@ T   & $k_T$ & MME    & ULSE   & KOE    & & MME    & ULSE   & KOE    & & MME    &
     & 3     & 0.4790 & 0.4745 & 0.0804 & & 0.4684 & 0.7047 & 0.3394 & & 0.4542 & 1.1896 & 0.3497\\
     & 4     & 0.7438 & 0.7127 & 0.0804 & & 0.7199 & 0.9042 & 0.3394 & & 0.7040 & 1.5134 & 0.3497\\ \hline
 \end{tabular}
-
-
 
 # Forecasting
 
@@ -400,8 +445,7 @@ $$
 $$
 Select $q$ by cumulative variance method and set $k_T=q$.
 
-
-# Application: pedestrian counts
+# Application
 
 ## Application: pedestrian counts
 
