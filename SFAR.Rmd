@@ -119,16 +119,16 @@ Seasonality occurs when $X_t(u)$ is influenced by seasonal factors (e.g., the qu
 \vspace*{-0.3cm}
 
   * $\{\bm{\varepsilon}_{t}\}$ is a functional $H$-white noise process
-  * $\phi_j$ are Hilbert-Schmidt integral operators in $\mathcal{L}(H)$
   * $\phi_p\ne 0$
   * Some stationarity conditions on $\phi_1,\dots,\phi_p$.
+  * Assume: $\phi_j$ are Hilbert-Schmidt operators in $\mathcal{L}(H)$
 
-###
-\centering
+\begin{block}{}\centering
 \begin{tabular}{rp{8cm}}
   $H=$ & separable real Hilbert space of square integrable functions.\\
   $\mathcal{L}(H)=$ & space of continuous linear operators from $H$ to $H$.
-\end{tabular}
+\end{tabular}\end{block}
+
 
 ## Seasonal univariate autoregression
 \fontsize{15}{16}\sf
@@ -168,8 +168,8 @@ Seasonality occurs when $X_t(u)$ is influenced by seasonal factors (e.g., the qu
 \vspace*{-0.3cm}
 
  * $\{\bm{\varepsilon}_{t}\}$ is a functional $H$-white noise process
- * $\Phi$ is Hilbert-Schmidt integral operator in $\mathcal{L}(H)$
- * $\Phi\ne 0$\pause
+ * $\Phi\ne 0$
+ * Assume: $\Phi$ is Hilbert-Schmidt operator in $\mathcal{L}(H)$\pause
 
 ### Stationarity of a SFAR(1)$_S$ process
 If there exists an integer $M\geq 1$ such that $\|\Phi^{M}\|_\mathcal{L}<1$,
@@ -191,8 +191,8 @@ where the series converges in $L^2_{H}$ with probability 1.
 \vspace*{-0.3cm}
 
  * $\{\bm{\varepsilon}_{t}\}$ is a functional $H$-white noise process
- * $\Phi$ is Hilbert-Schmidt integral operator in $\mathcal{L}(H)$
  * $\Phi\ne 0$
+ * Assume: $\Phi$ is Hilbert-Schmidt operator in $\mathcal{L}(H)$
 
 ### Link to SAR(1)$_S$ processes
 Let $$\Phi=\sum\limits_{j=1}\alpha_j e_j\otimes e_j$$ be a symmetric compact operator on $H$.
@@ -258,13 +258,13 @@ where $\Gamma=(I-\Phi)^{-1}C_{\varepsilon}(I-\Phi^{*})^{-1}$.
 \begin{block}{Covariance operator}
 $$
  C_{k}^X = \E({X_t\otimes X_{t-k}}) \qquad\qquad
- \hat{C}_{k}^X = \frac{1}{T}\sum_{t=k+1}^{T}X_{j}\otimes X_{j-k}
+ \hat{C}_{k}^X = \frac{1}{T}\sum_{t=k+1}^{T}X_{t}\otimes X_{t-k}
 $$
 \end{block}
 \begin{block}{Eigendecomposition}
 For any $x\in H$,
 \begin{align*}
-  \Phi(X)
+  \Phi(x)
     = \sum_{j=1}^\infty \left\langle x,\nu_j\right\rangle \Phi(\nu_j)
     = \sum_{j=1}^\infty\frac{C_S^X(\nu_{j})}{\lambda_j} \left\langle x,\nu_j\right\rangle
 \end{align*}
@@ -272,7 +272,7 @@ For any $x\in H$,
 
  * Estimate $\lambda_{j}$ and $\nu_{j}$  from $\hat{C}_0^X$.\vspace*{0.2cm}
 
- * $\displaystyle\hat{\Phi}(X)=\sum_{j=1}^{J}\frac{\hat{C}_S^X(\hat{\nu}_{j})}{\hat{\lambda}_{j}} \left\langle{x},\hat{\nu}_{j}\right\rangle$
+ * $\displaystyle\hat{\Phi}(x)=\sum_{j=1}^{J}\frac{\hat{C}_S^X(\hat{\nu}_{j})}{\hat{\lambda}_{j}} \left\langle{x},\hat{\nu}_{j}\right\rangle$
 
 ## Unconditional Least Squares
 
