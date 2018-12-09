@@ -1,7 +1,7 @@
 ---
 title: Seasonal functional autoregressive models
 author: Rob J Hyndman, Maryam Hashemi, Hossein Haghbin & Atefeh Zamani
-date: 8 November 2018
+date: 9 November 2018
 titlefontsize: 21pt
 colortheme: monashblue
 abstract: Functional autoregressive models have been widely used in functional time series analysis, but no attention has been given to handling seasonality within this framework. I will discuss a proposed  seasonal functional autoregressive model, and explore some of its statistical properties including stationarity conditions and limiting behaviour. I will also look at methods for estimation and prediction of seasonal functional autoregressive time series of order one. The ideas will be illustrated using simulation studies and real data.
