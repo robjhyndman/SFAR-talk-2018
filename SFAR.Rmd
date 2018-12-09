@@ -25,7 +25,7 @@ library(sugrrants)
 
 # Motivation
 
-## Flu/respiratory mortality (US)
+## Monthly flu/respiratory mortality (US)
 
 ```{r mortalitydata, include=FALSE}
 grag <- readRDS("GroupAggregate.rds")
@@ -53,7 +53,7 @@ flu %>%
     scale_y_log10()
 ```
 
-## Flu/respiratory mortality (US)
+## Monthly flu/respiratory mortality (US)
 
 ```{r mortality1}
 flu %>%
@@ -64,21 +64,35 @@ flu %>%
 #    guides(col=FALSE)
 ```
 
-## Flu/respiratory mortality (US)
+## Hourly pedestrian count at Flinders St
 
 ```{r flindersdata}
-ped_walk <- walk_melb(from = as.Date("2016-01-01"), to = as.Date("2016-12-31"))
-flinders <- ped_walk %>%
-  filter(Sensor == "Flinders Street Station Underpass") %>%
+flinders <- sugrrants::pedestrian  %>%
+  filter(
+    Sensor_Name == "Flinders Street Station Underpass",
+    Date <= as.Date("2016-12-31"),
+  ) %>%
+  select(-Sensor_ID, -Sensor_Name) %>%
+  rename_all(tolower) %>%
+  rename(
+    hour = "time",
+    time = "date_time",
+    number = "hourly_counts"
+  ) %>%
+  left_join(tsibble::holiday_aus(2016, state = "VIC")) %>%
   mutate(
-    day = lubridate::wday(Date, label=TRUE),
-    hour = lubridate::hour(Date_Time)
-  )
+    daytype = ifelse(
+      day %in% c("Saturday", "Sunday") | !is.na(holiday),
+      "Holiday", "Workday"
+    ),
+    week = lubridate::week(date)
+  ) %>%
+  select(date, hour, day, daytype, number, week)
 ```
 
 ```{r flinders_timeplot, dependson="flindersdata"}
 flinders %>%
-  ggplot(aes(x=hour, y=Count, group=Date)) +
+  ggplot(aes(x=hour, y=number, group=date)) +
     geom_line() +
     facet_grid(~ day)
 ```
@@ -451,7 +465,7 @@ Select $q$ by cumulative variance method and set $k_T=q$.
 
 ```{r flinders_timeplot2, dependson="flindersdata"}
 flinders %>%
-  ggplot(aes(x=hour, y=Count, group=Date)) +
+  ggplot(aes(x=hour, y=number, group=date)) +
     geom_line() +
     facet_grid(~ day)
 ```
