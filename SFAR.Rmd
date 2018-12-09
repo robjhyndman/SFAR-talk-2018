@@ -499,7 +499,7 @@ A sequence $\{X_{t};t\in\mathbb{Z}\}$ of functional random variables is said to 
 $$
  X_{t}-\mu=\Phi_{1}\left(X_{t-S}-\mu\right)+\dots+\Phi_{P}\left(X_{t-PS}-\mu\right)+\varepsilon_{t},
 $$
-where $\{\varepsilon_{t}, t\in\mathbb{Z}\}$ is H-white noise, $\mu\in H$, and $\Phi_{1},\dots,\Phi_{P}\in\mathcal{L}(H)$, with $\Phi_{P}\neq 0$.
+where $\{\varepsilon_{t}, t\in\mathbb{Z}\}$ is H-white noise, $\mu\in H$, and $\Phi_{1},\dots,\Phi_{P}\in\mathcal{L}(H)$, with $\Phi_{P}\ne 0$.
 
 ## SFAR($P$)$_S$ processes
 
@@ -522,7 +522,7 @@ where $I$ and $0$ denote identity and zero operator on $H$.
 
 ## SFAR($P$)$_S$ processes
 \begin{Theorem}
-  Let $X_n$ be a SFAR$(P)_S$ zero-mean process associated with $\left(\varepsilon , \phi_1,\phi_2,\dots,\phi_P\right)$. Suppose that there exist $\nu\in H$ and $\alpha_1,\dots,\alpha_P\in {\mathbb{R}}$, $\alpha_P\neq 0$, such that $\phi_j\left(\nu\right) =\alpha_j\nu_j$, $j=1,\dots, P$ and $\E\left\langle\varepsilon_0,\nu\right\rangle^2>0$. Then, $\left(\left\langle X_t,\nu \right\rangle,\;t \in {\mathbb{Z}}\right)$ is a SAR$(P)$ process, i.e.,
+  Let $X_n$ be a SFAR$(P)_S$ zero-mean process associated with $\left(\varepsilon , \phi_1,\phi_2,\dots,\phi_P\right)$. Suppose that there exist $\nu\in H$ and $\alpha_1,\dots,\alpha_P\in {\mathbb{R}}$, $\alpha_P\ne 0$, such that $\phi_j\left(\nu\right) =\alpha_j\nu_j$, $j=1,\dots, P$ and $\E\left\langle\varepsilon_0,\nu\right\rangle^2>0$. Then, $\left(\left\langle X_t,\nu \right\rangle,\;t \in {\mathbb{Z}}\right)$ is a SAR$(P)$ process, i.e.,
   $$
     \langle X_t,\nu\rangle = \sum_{j=1}^P \alpha_j \langle X_{t-jS},\nu \rangle + \langle \varepsilon_t,\nu \rangle,
       \qquad t\in {\mathbb{Z}}.
